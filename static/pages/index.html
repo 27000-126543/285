@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业级多币种资金池管理系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>💰 资金池管理系统</h1>
+            <p>Multi-Currency Fund Pool</p>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+                <a href="javascript:void(0)">
+                    <span class="nav-icon">📊</span>
+                    <span>数据仪表盘</span>
+                </a>
+            </li>
+            <li class="nav-item" data-page="transactions" onclick="navigateTo('transactions')">
+                <a href="javascript:void(0)">
+                    <span class="nav-icon">📝</span>
+                    <span>交易流水查询</span>
+                </a>
+            </li>
+            <li class="nav-item" data-page="forecast" onclick="navigateTo('forecast')">
+                <a href="javascript:void(0)">
+                    <span class="nav-icon">📈</span>
+                    <span>资金预测看板</span>
+                </a>
+            </li>
+            <li class="nav-item" data-page="approvals" onclick="navigateTo('approvals')">
+                <a href="javascript:void(0)">
+                    <span class="nav-icon">✅</span>
+                    <span>换汇审批中心</span>
+                </a>
+            </li>
+            <li class="nav-item" data-page="adjustments" onclick="navigateTo('adjustments')">
+                <a href="javascript:void(0)">
+                    <span class="nav-icon">✏️</span>
+                    <span>手动调整录入</span>
+                </a>
+            </li>
+            <li class="nav-item" data-page="risk" onclick="navigateTo('risk')">
+                <a href="javascript:void(0)">
+                    <span class="nav-icon">⚠️</span>
+                    <span>风险预警中心</span>
+                </a>
+            </li>
+            <li class="nav-item" data-page="reports" onclick="navigateTo('reports')">
+                <a href="javascript:void(0)">
+                    <span class="nav-icon">📑</span>
+                    <span>月度报告管理</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div id="page-dashboard" class="page">
+            <div class="page-header">
+                <h2>📊 数据仪表盘</h2>
+                <p>实时监控各币种资金状况、汇率波动和风险预警</p>
+            </div>
+            
+            <div id="stats-grid" class="stats-grid"></div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>各币种资金余额</h3>
+                </div>
+                <div id="currency-cards" class="currency-grid"></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>汇率行情概览</h3>
+                    <span class="badge badge-low">基准货币: CNY</span>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>币种</th>
+                                <th>当前汇率</th>
+                                <th>7日涨跌幅</th>
+                                <th>趋势</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fx-rates-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-transactions" class="page" style="display: none;">
+            <div class="page-header">
+                <h2>📝 交易流水查询</h2>
+                <p>支持多维度组合查询，批量导出Excel/CSV/JSON</p>
+            </div>
+            
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>开始日期:</label>
+                    <input type="date" id="filter-start-date">
+                </div>
+                <div class="filter-group">
+                    <label>结束日期:</label>
+                    <input type="date" id="filter-end-date">
+                </div>
+                <div class="filter-group">
+                    <label>币种:</label>
+                    <select id="filter-currency">
+                        <option value="">全部</option>
+                        <option value="CNY">人民币 CNY</option>
+                        <option value="USD">美元 USD</option>
+                        <option value="EUR">欧元 EUR</option>
+                        <option value="GBP">英镑 GBP</option>
+                        <option value="JPY">日元 JPY</option>
+                        <option value="HKD">港币 HKD</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>类型:</label>
+                    <select id="filter-type">
+                        <option value="">全部</option>
+                        <option value="in">收入</option>
+                        <option value="out">支出</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>最小金额:</label>
+                    <input type="number" id="filter-min-amount" placeholder="最小值">
+                </div>
+                <div class="filter-group">
+                    <label>最大金额:</label>
+                    <input type="number" id="filter-max-amount" placeholder="最大值">
+                </div>
+                <div class="filter-group">
+                    <label>交易对手:</label>
+                    <input type="text" id="filter-counterparty" placeholder="关键词">
+                </div>
+                <button class="btn btn-primary" onclick="loadTransactions()">🔍 查询</button>
+                <button class="btn btn-outline" onclick="resetFilters()">🔄 重置</button>
+            </div>
+            
+            <div style="margin-bottom: 15px; text-align: right;">
+                <span style="margin-right: 10px;">批量导出:</span>
+                <button class="btn btn-sm btn-success" onclick="exportTransactions('excel')">📊 Excel</button>
+                <button class="btn btn-sm btn-primary" onclick="exportTransactions('csv')">📄 CSV</button>
+                <button class="btn btn-sm btn-warning" onclick="exportTransactions('json')">📋 JSON</button>
+            </div>
+            
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>类型</th>
+                                <th>币种</th>
+                                <th>金额</th>
+                                <th>账户</th>
+                                <th>交易对手</th>
+                                <th>分类</th>
+                                <th>摘要</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body"></tbody>
+                    </table>
+                </div>
+                <div id="transactions-pagination"></div>
+            </div>
+        </div>
+
+        <div id="page-forecast" class="page" style="display: none;">
+            <div class="page-header">
+                <h2>📈 资金预测与缺口看板</h2>
+                <p>未来7天各币种资金预测曲线，缺口自动高亮预警</p>
+            </div>
+            
+            <div id="forecast-charts"></div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>🚨 资金缺口列表</h3>
+                    <span class="badge badge-high">点击缺口行查看换汇方案</span>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>缺口日期</th>
+                                <th>币种</th>
+                                <th>缺口金额</th>
+                                <th>预计余额</th>
+                                <th>预警阈值</th>
+                                <th>严重程度</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gaps-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-approvals" class="page" style="display: none;">
+            <div class="page-header">
+                <h2>✅ 换汇方案审批中心</h2>
+                <p>查看待审批方案，显示最优路径和成本对比，支持多级审批</p>
+            </div>
+            
+            <div id="approvals-container"></div>
+        </div>
+
+        <div id="page-adjustments" class="page" style="display: none;">
+            <div class="page-header">
+                <h2>✏️ 手动调整录入</h2>
+                <p>录入大额预付或延期付款，系统自动更新预测</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>新增手动调整</h3>
+                    <button class="btn btn-primary" onclick="openModal('adjustment-modal')">➕ 新增</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>生效日期</th>
+                                <th>币种</th>
+                                <th>类型</th>
+                                <th>金额</th>
+                                <th>说明</th>
+                                <th>录入人</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adjustments-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-risk" class="page" style="display: none;">
+            <div class="page-header">
+                <h2>⚠️ 风险预警中心</h2>
+                <p>连续3天波动超2%自动预警，推送对冲建议</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>🚨 活跃风险预警</h3>
+                </div>
+                <div id="risk-alerts"></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>📊 风险敞口明细</h3>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>币种</th>
+                                <th>净头寸</th>
+                                <th>敞口金额 (等值CNY)</th>
+                                <th>3日波动率</th>
+                                <th>VaR 95%</th>
+                                <th>计算日期</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exposures-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-reports" class="page" style="display: none;">
+            <div class="page-header">
+                <h2>📑 月度报告管理</h2>
+                <p>资金归集率、换汇成本、汇率波动影响分析，支持PDF和Excel下载</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>月度报告列表</h3>
+                    <button class="btn btn-primary" onclick="generateNewReport()">🔄 生成本月报告</button>
+                </div>
+                <div id="reports-list"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="gap-proposals-modal" class="modal" onclick="closeModalOnBackdrop(event, 'gap-proposals-modal')">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="gap-proposal-title">换汇方案</h3>
+                <button class="modal-close" onclick="closeModal('gap-proposals-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="gap-proposals-content"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('gap-proposals-modal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adjustment-modal" class="modal" onclick="closeModalOnBackdrop(event, 'adjustment-modal')">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新增手动调整</h3>
+                <button class="modal-close" onclick="closeModal('adjustment-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustment-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>币种 *</label>
+                            <select id="adj-currency" required>
+                                <option value="">请选择</option>
+                                <option value="CNY">人民币 CNY</option>
+                                <option value="USD">美元 USD</option>
+                                <option value="EUR">欧元 EUR</option>
+                                <option value="GBP">英镑 GBP</option>
+                                <option value="JPY">日元 JPY</option>
+                                <option value="HKD">港币 HKD</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>调整类型 *</label>
+                            <select id="adj-type" required>
+                                <option value="">请选择</option>
+                                <option value="inflow">资金流入（预收/应收）</option>
+                                <option value="outflow">资金流出（预付/应付）</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>金额 *</label>
+                            <input type="number" id="adj-amount" step="0.01" required placeholder="请输入金额">
+                        </div>
+                        <div class="form-group">
+                            <label>生效日期 *</label>
+                            <input type="date" id="adj-date" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>说明 *</label>
+                        <input type="text" id="adj-description" required placeholder="例如：大额原材料预付、客户预收货款等">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>交易对手</label>
+                            <input type="text" id="adj-counterparty" placeholder="可选">
+                        </div>
+                        <div class="form-group">
+                            <label>分类</label>
+                            <select id="adj-category">
+                                <option value="">请选择</option>
+                                <option value="large_payment">大额付款</option>
+                                <option value="deferred_payment">延期付款</option>
+                                <option value="advance_payment">预付货款</option>
+                                <option value="received_payment">预收货款</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('adjustment-modal')">取消</button>
+                <button class="btn btn-primary" onclick="submitAdjustment()">提交</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/transactions.js"></script>
+    <script src="/static/js/forecast.js"></script>
+    <script src="/static/js/approvals.js"></script>
+    <script src="/static/js/pages.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>
