@@ -43,11 +43,18 @@ async function submitAdjustment() {
     }
     
     try {
-        let url = `/api/manual-adjustments?currency=${currency}&adjustment_type=${adjustmentType}&amount=${amount}&effective_date=${effectiveDate}&description=${encodeURIComponent(description)}`;
-        if (counterparty) url += `&counterparty=${encodeURIComponent(counterparty)}`;
-        if (category) url += `&category=${encodeURIComponent(category)}`;
+        const data = {
+            currency,
+            adjustment_type: adjustmentType,
+            amount,
+            effective_date: effectiveDate,
+            description,
+            counterparty: counterparty || '',
+            category: category || '',
+            created_by: 'web_user'
+        };
         
-        await apiRequest(url, 'POST');
+        await apiRequest('/api/manual-adjustments', 'POST', data);
         showToast('添加成功，预测已自动更新', 'success');
         closeModal('adjustment-modal');
         document.getElementById('adjustment-form').reset();

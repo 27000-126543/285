@@ -1,6 +1,26 @@
 let currentTransactionsPage = 1;
 const transactionsPageSize = 20;
 
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInputs = [
+        'filter-start-date', 'filter-end-date', 'filter-currency',
+        'filter-type', 'filter-min-amount', 'filter-max-amount', 'filter-counterparty'
+    ];
+    
+    filterInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    currentTransactionsPage = 1;
+                    loadTransactions();
+                }
+            });
+        }
+    });
+});
+
 async function loadTransactions() {
     try {
         const startDate = document.getElementById('filter-start-date').value;

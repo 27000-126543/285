@@ -43,12 +43,17 @@ function drawForecastChart(currency, forecasts, gaps) {
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
-    const width = canvas.width = canvas.offsetWidth;
+    const width = canvas.width = canvas.offsetWidth || 800;
     const height = canvas.height = 250;
     
     const padding = { top: 30, right: 20, bottom: 50, left: 80 };
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
+    
+    if (chartWidth <= 0 || chartHeight <= 0) {
+        setTimeout(() => drawForecastChart(currency, forecasts, gaps), 100);
+        return;
+    }
     
     const allBalances = forecasts.map(f => f.projected_balance);
     const allInflows = forecasts.map(f => f.inflow);

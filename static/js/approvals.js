@@ -157,7 +157,8 @@ async function approveProposal(proposalId, level) {
     const comments = prompt('审批意见（可选）:');
     
     try {
-        await apiRequest(`/api/proposals/${proposalId}/approve?level=${level}&approver=${encodeURIComponent(approver)}${comments ? '&comments=' + encodeURIComponent(comments) : ''}`, 'POST');
+        const data = { level, approver, comments: comments || '' };
+        await apiRequest(`/api/proposals/${proposalId}/approve`, 'POST', data);
         showToast('审批成功', 'success');
         loadApprovals();
     } catch (error) {
@@ -172,7 +173,8 @@ async function rejectProposal(proposalId, level) {
     const comments = prompt('拒绝原因:');
     
     try {
-        await apiRequest(`/api/proposals/${proposalId}/reject?level=${level}&approver=${encodeURIComponent(approver)}${comments ? '&comments=' + encodeURIComponent(comments) : ''}`, 'POST');
+        const data = { level, approver, comments: comments || '' };
+        await apiRequest(`/api/proposals/${proposalId}/reject`, 'POST', data);
         showToast('已拒绝', 'success');
         loadApprovals();
     } catch (error) {
@@ -195,7 +197,8 @@ async function executeProposal(proposalId, sourceCurrency, targetCurrency) {
     if (!confirm(`确认执行换汇？\n从账户 ${sourceAccount} 到 ${targetAccount}`)) return;
     
     try {
-        const result = await apiRequest(`/api/proposals/${proposalId}/execute?source_account=${sourceAccount}&target_account=${targetAccount}`, 'POST');
+        const data = { source_account: sourceAccount, target_account: targetAccount };
+        const result = await apiRequest(`/api/proposals/${proposalId}/execute`, 'POST', data);
         showToast(`换汇执行成功: ${result.execution.execution_id}`, 'success');
         loadApprovals();
     } catch (error) {

@@ -142,15 +142,15 @@
                     <label>交易对手:</label>
                     <input type="text" id="filter-counterparty" placeholder="关键词">
                 </div>
-                <button class="btn btn-primary" onclick="loadTransactions()">🔍 查询</button>
-                <button class="btn btn-outline" onclick="resetFilters()">🔄 重置</button>
+                <button type="button" class="btn btn-primary" onclick="loadTransactions()">🔍 查询</button>
+                <button type="button" class="btn btn-outline" onclick="resetFilters()">🔄 重置</button>
             </div>
             
             <div style="margin-bottom: 15px; text-align: right;">
                 <span style="margin-right: 10px;">批量导出:</span>
-                <button class="btn btn-sm btn-success" onclick="exportTransactions('excel')">📊 Excel</button>
-                <button class="btn btn-sm btn-primary" onclick="exportTransactions('csv')">📄 CSV</button>
-                <button class="btn btn-sm btn-warning" onclick="exportTransactions('json')">📋 JSON</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="exportTransactions('excel')">📊 Excel</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="exportTransactions('csv')">📄 CSV</button>
+                <button type="button" class="btn btn-sm btn-warning" onclick="exportTransactions('json')">📋 JSON</button>
             </div>
             
             <div class="card">
@@ -315,7 +315,7 @@
                 <button class="modal-close" onclick="closeModal('adjustment-modal')">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="adjustment-form">
+                <form id="adjustment-form" onsubmit="event.preventDefault(); return false;">
                     <div class="form-row">
                         <div class="form-group">
                             <label>币种 *</label>

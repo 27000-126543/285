@@ -130,7 +130,19 @@ function navigateTo(page) {
     
     if (page === 'dashboard') loadDashboard();
     if (page === 'transactions') loadTransactions();
-    if (page === 'forecast') loadForecast();
+    if (page === 'forecast') {
+        loadForecast();
+        setTimeout(() => {
+            if (forecastData) {
+                Object.keys(forecastData.forecasts).forEach(currency => {
+                    const canvas = document.getElementById(`forecast-chart-${currency}`);
+                    if (canvas) {
+                        drawForecastChart(currency, forecastData.forecasts[currency], forecastData.gaps.filter(g => g.currency === currency));
+                    }
+                });
+            }
+        }, 50);
+    }
     if (page === 'approvals') loadApprovals();
     if (page === 'adjustments') loadAdjustments();
     if (page === 'risk') loadRiskAlerts();

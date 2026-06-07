@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Dict, Any
+from pydantic import BaseModel
 import os
 import sys
 
@@ -14,6 +15,25 @@ from src.database import get_db
 from src.utils.helpers import safe_json_loads
 
 app = FastAPI(title="企业级多币种资金池管理系统 API")
+
+class ApprovalRequest(BaseModel):
+    level: int
+    approver: str
+    comments: Optional[str] = None
+
+class ExecuteRequest(BaseModel):
+    source_account: str
+    target_account: str
+
+class AdjustmentRequest(BaseModel):
+    currency: str
+    adjustment_type: str
+    amount: float
+    effective_date: str
+    description: str
+    counterparty: Optional[str] = None
+    category: Optional[str] = None
+    created_by: Optional[str] = "web_user"
 
 app.add_middleware(
     CORSMiddleware,
@@ -324,24 +344,61 @@ async def get_proposals(status: Optional[str] = None):
         return {'proposals': result}
 
 @app.post("/api/proposals/{proposal_id}/approve")
-async def approve_proposal(proposal_id: str, level: int, approver: str, comments: Optional[str] = None):
+async def approve_proposal(proposal_id: str, request: Request):
     system = get_system_instance()
-    success = system.approve_proposal(proposal_id, level, approver, comments)
+    try:
+        body = await request.json()
+        level = body.get('level')
+        approver = body.get('approver')
+        comments = body.get('comments')
+    except:
+        level = request.query_params.get('level')
+        approver = request.query_params.get('approver')
+        comments = request.query_params.get('comments')
+    
+    if not level or not approver:
+        raise HTTPException(status_code=400, detail="Missing required parameters: level, approver")
+    
+    success = system.approve_proposal(proposal_id, int(level), approver, comments)
     if not success:
         raise HTTPException(status_code=400, detail="Approval failed")
     return {'status': 'success', 'proposal_id': proposal_id}
 
 @app.post("/api/proposals/{proposal_id}/reject")
-async def reject_proposal(proposal_id: str, level: int, approver: str, comments: Optional[str] = None):
+async def reject_proposal(proposal_id: str, request: Request):
     system = get_system_instance()
-    success = system._components['approval_workflow'].reject(proposal_id, level, approver, comments)
+    try:
+        body = await request.json()
+        level = body.get('level')
+        approver = body.get('approver')
+        comments = body.get('comments')
+    except:
+        level = request.query_params.get('level')
+        approver = request.query_params.get('approver')
+        comments = request.query_params.get('comments')
+    
+    if not level or not approver:
+        raise HTTPException(status_code=400, detail="Missing required parameters: level, approver")
+    
+    success = system._components['approval_workflow'].reject(proposal_id, int(level), approver, comments)
     if not success:
         raise HTTPException(status_code=400, detail="Rejection failed")
     return {'status': 'success', 'proposal_id': proposal_id}
 
 @app.post("/api/proposals/{proposal_id}/execute")
-async def execute_exchange(proposal_id: str, source_account: str, target_account: str):
+async def execute_exchange(proposal_id: str, request: Request):
     system = get_system_instance()
+    try:
+        body = await request.json()
+        source_account = body.get('source_account')
+        target_account = body.get('target_account')
+    except:
+        source_account = request.query_params.get('source_account')
+        target_account = request.query_params.get('target_account')
+    
+    if not source_account or not target_account:
+        raise HTTPException(status_code=400, detail="Missing required parameters: source_account, target_account")
+    
     result = system.execute_exchange(proposal_id, source_account, target_account)
     if not result:
         raise HTTPException(status_code=400, detail="Execution failed")
@@ -366,22 +423,36 @@ async def get_accounts():
         }
 
 @app.post("/api/manual-adjustments")
-async def create_manual_adjustment(
-    currency: str,
-    adjustment_type: str,
-    amount: float,
-    effective_date: str,
-    description: str,
-    counterparty: Optional[str] = None,
-    category: Optional[str] = None
-):
+async def create_manual_adjustment(request: Request):
     system = get_system_instance()
+    
+    try:
+        body = await request.json()
+        currency = body.get('currency')
+        adjustment_type = body.get('adjustment_type')
+        amount = body.get('amount')
+        effective_date = body.get('effective_date')
+        description = body.get('description')
+        counterparty = body.get('counterparty')
+        category = body.get('category')
+    except:
+        currency = request.query_params.get('currency')
+        adjustment_type = request.query_params.get('adjustment_type')
+        amount = request.query_params.get('amount')
+        effective_date = request.query_params.get('effective_date')
+        description = request.query_params.get('description')
+        counterparty = request.query_params.get('counterparty')
+        category = request.query_params.get('category')
+    
+    if not currency or not adjustment_type or not amount or not effective_date or not description:
+        raise HTTPException(status_code=400, detail="Missing required parameters")
+    
     eff_date = datetime.strptime(effective_date, '%Y-%m-%d').date()
     
     adjustment = system.add_manual_adjustment(
         currency=currency,
         adjustment_type=adjustment_type,
-        amount=amount,
+        amount=float(amount),
         effective_date=eff_date,
         description=description,
         counterparty=counterparty,
