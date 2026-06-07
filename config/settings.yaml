@@ -1,0 +1,104 @@
+system:
+  name: "多币种资金池管理系统"
+  timezone: "Asia/Shanghai"
+  log_level: "INFO"
+  max_concurrent_tasks: 20
+  batch_size: 1000
+
+database:
+  type: "sqlite"
+  path: "data/fund_pool.db"
+  backup_enabled: true
+  backup_path: "data/backups"
+
+bank_accounts:
+  - id: "BANK001"
+    name: "工商银行-美元账户"
+    bank: "ICBC"
+    currency: "USD"
+    api_endpoint: "https://api.icbc.com/banking"
+    api_key: "${ICBC_API_KEY}"
+  - id: "BANK002"
+    name: "建设银行-欧元账户"
+    bank: "CCB"
+    currency: "EUR"
+    api_endpoint: "https://api.ccb.com/banking"
+    api_key: "${CCB_API_KEY}"
+  - id: "BANK003"
+    name: "中国银行-人民币账户"
+    bank: "BOC"
+    currency: "CNY"
+    api_endpoint: "https://api.boc.com/banking"
+    api_key: "${BOC_API_KEY}"
+  - id: "BANK004"
+    name: "汇丰银行-港币账户"
+    bank: "HSBC"
+    currency: "HKD"
+    api_endpoint: "https://api.hsbc.com/banking"
+    api_key: "${HSBC_API_KEY}"
+  - id: "BANK005"
+    name: "招商银行-日元账户"
+    bank: "CMB"
+    currency: "JPY"
+    api_endpoint: "https://api.cmb.com/banking"
+    api_key: "${CMB_API_KEY}"
+  - id: "BANK006"
+    name: "交通银行-英镑账户"
+    bank: "BOCOM"
+    currency: "GBP"
+    api_endpoint: "https://api.bocom.com/banking"
+    api_key: "${BOCOM_API_KEY}"
+
+currencies:
+  base: "CNY"
+  supported: ["CNY", "USD", "EUR", "HKD", "JPY", "GBP"]
+  exchange_rate_api: "https://api.exchangerate-api.com/v4/latest/CNY"
+  rate_update_interval: 3600
+
+forecasting:
+  days_ahead: 7
+  history_days: 90
+  model: "weighted_moving_average"
+  confidence_level: 0.95
+  seasonality_enabled: true
+
+risk:
+  volatility_threshold: 0.02
+  volatility_days: 3
+  exposure_warning_level: 0.1
+  hedge_recommendation_enabled: true
+
+approval:
+  levels:
+    - threshold: 50000
+      role: "financial_manager"
+    - threshold: 200000
+      role: "finance_director"
+    - threshold: 500000
+      role: "cfo"
+  base_currency: "USD"
+  auto_approve_below: 10000
+
+scheduling:
+  fetch_transactions: "0 6 * * *"
+  calculate_forecast: "0 7 * * *"
+  check_gaps: "0 8 * * *"
+  calculate_risk: "0 9 * * *"
+  monthly_report: "0 8 1 * *"
+  backup_database: "0 2 * * *"
+
+notifications:
+  enterprise_wechat:
+    enabled: true
+    webhook_url: "${WECHAT_WEBHOOK_URL}"
+  email:
+    enabled: false
+    smtp_server: "smtp.company.com"
+    smtp_port: 587
+    sender: "finance@company.com"
+  alert_channels: ["wechat", "email"]
+
+exports:
+  pdf_path: "exports/pdf"
+  excel_path: "exports/excel"
+  retention_days: 180
